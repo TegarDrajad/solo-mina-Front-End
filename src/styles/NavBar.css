@@ -1,0 +1,8 @@
+.myNavBar{
+    align-items: center;
+    height: 10vh;
+    position: fixed;
+    background: #FFFFFF;
+    transition: top 0.3s;
+}
+
