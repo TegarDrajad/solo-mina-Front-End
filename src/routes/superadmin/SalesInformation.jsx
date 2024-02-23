@@ -1,16 +1,50 @@
-import { Box, Flex, Heading, Select, Text, Input, TableContainer, Table, Thead, Tr, Th, Tbody, Td, Button, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, FormControl, FormLabel, ModalFooter} from "@chakra-ui/react";
+import { Box, Flex, Heading, Select, Text, Input, TableContainer, Table, Thead, Tr, Th, Tbody, Td, Button, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, FormControl, FormLabel, ModalFooter, useToast} from "@chakra-ui/react";
 import SidebarSuperAdmin from "../../components/SidebarSuperAdmin";
 import { useState } from "react";
+import api from "../../services/api";
+import { useEffect } from "react";
 
 const SalesInformation = () => {
     
     const { isOpen, onOpen, onClose } = useDisclosure();
+
+    const toast = useToast();
 
     // Second Modal Delete Data
     const [secondModal, setSecondModal] = useState(false);
 
     const closeSecondModal = () => setSecondModal(false);
     const openSecondModal = () => setSecondModal(true);
+
+    // state to paginated 
+    const [page, setPage] = useState(1);
+
+    // state to save data all recaps 
+    const [dataRecaps, setDataRecaps] = useState([]);
+
+    // get all recaps 
+    const getAllRecaps = async() => {
+        try {
+            const response = await api.get(`/api/v6/recap/page?page=${page}`);
+            setDataRecaps(response.data.payload.data);
+        } catch (error) {
+            console.log("Error Fetching Data", error);
+            toast({
+                title: 'Error.!',
+                description: `${error.response.data.message}`,
+                status: 'error',
+                duration: 1500,
+                isClosable: true,
+                position: 'top',
+            });
+        }
+    };
+
+    console.log(dataRecaps);
+
+    useEffect(() => {
+        getAllRecaps();
+    }, []);
     
     return(
         <>
@@ -39,6 +73,10 @@ const SalesInformation = () => {
                                 <Text marginBottom={"15px"}>Status</Text>
                                 <Select variant={"outline"} placeholder="Status"></Select>
                             </Box>
+
+                            <Box marginLeft={"400px"}>
+                                <Button size={"md"} bgColor={"#4CAF4F"} borderRadius={"10px"} marginTop={"38px"} onClick={() => {window.location.href= '/backoffice/addDataSale'}}>+ Add</Button>
+                            </Box>
                         </Flex>
 
                         <Box bgColor={"whitesmoke"} boxSize={"6xl"} marginTop={"25px"} borderRadius={"20px"} marginLeft={"10px"}>
@@ -50,28 +88,31 @@ const SalesInformation = () => {
                                             <Th>Date</Th>
                                             <Th>Customer</Th>
                                             <Th>Fish Name</Th>
-                                            <Th>Total Product</Th>
+                                            <Th>Total Fish</Th>
                                             <Th>Total Price</Th>
                                             <Th>Status</Th>
-                                            <Th paddingLeft={"55px"}>Action</Th>
+                                            <Th>Action</Th>
                                         </Tr>
                                     </Thead>
                                     <Tbody>
-                                        <Tr>
-                                            <Td>1</Td>
-                                            <Td>20/11/2022</Td>
-                                            <Td>Parno</Td>
-                                            <Td>Nila</Td>
-                                            <Td>20kg</Td>
-                                            <Td>2.000.000</Td>
-                                            <Td>Paid</Td>  
-                                            <Td>
-                                                <Flex gap={"2"}>
-                                                    <Button onClick={onOpen} size={"sm"} colorScheme="blue" borderRadius={"40px"}>Edit</Button>
-                                                    <Button onClick={openSecondModal} size={"sm"} colorScheme="red" borderRadius={"40px"}>Delete</Button>
-                                                </Flex>    
-                                            </Td>                                
-                                        </Tr>
+                                        {dataRecaps && dataRecaps.map((recap, index) => (
+                                            <Tr>
+                                                <Td>{recap.id}</Td>
+                                                <Td>{new Date(recap.createdAt).toLocaleDateString('id-ID')}</Td>
+                                                <Td>{recap.customer.name}</Td>
+                                                <Td>{recap.fish.name}</Td>
+                                                <Td>{recap.total_product}Kg</Td>
+                                                <Td>{`Rp. ${recap.total_price.toLocaleString('id-ID')}`}</Td>
+                                                <Td>{recap.status}</Td>  
+                                                <Td>
+                                                    <Flex gap={"2"}>
+                                                        <Button size={"sm"} colorScheme="blackAlpha" borderRadius={"40px"}>Detail</Button>
+                                                        <Button onClick={onOpen} size={"sm"} colorScheme="blue" borderRadius={"40px"}>Edit</Button>
+                                                        <Button onClick={openSecondModal} size={"sm"} colorScheme="red" borderRadius={"40px"}>Delete</Button>
+                                                    </Flex>    
+                                                </Td>                                
+                                            </Tr>
+                                        ))}
                                     </Tbody>
                                 </Table>
                             </TableContainer>
